@@ -1,0 +1,55 @@
+笔记：
+一、使用关联容器
+1、关联容器和顺序容器有着根本的不同：关联容器中的元素是按关键字来保存和访问的。与之相对，顺序容器中的元素是按它们在容器中的位置来顺序保存和访问的。
+2、关联容器支持高效的关键字查找和访问。两个主要的关联容器类型是map和set。map中的元素是一些关键字-值(key-value)对：关键字起到索引的作用，值则表示与索引相关联的数据。set中每个元素只包含一个关键字；set支持高效的关键字查询操作——检查一个给定关键字是否在set中。
+3、当从map中提取一个元素时，会得到一个pair类型的对象。pair是一个模板类型，保存两个名为first和second的(公有)数据成员。map所使用的pair用first成员保存关键字，用second成员保存对应的值。
+
+二、关联容器概述
+1、传递给排序算法的可调用对象必须满足与关联容器中关键字一样的类型要求。
+2、当用decltype来获得一个函数指针类型时，必须加上一个*来指出我们要使用一个给定函数类型的指针。
+例如:
+multiset<Sales_data, decltype(compareIsbn)*> bookstore(compareIsbn);
+注意点①当定义此容器类型的对象时，需要提供想要使用的操作的指针。
+注意点②用compareIsbn来初始化bookstore对象，这表示当我们向bookstore添加元素时，通过调用compareIsbn来为这些元素排序。
+注意点③可以用compareIsbn代替&compareIsbn作为构造函数的参数，因为当我们使用一个函数的名字时，在需要的情况下它会自动转化为一个指针。
+3、标准库类型pair定义在头文件utility中。
+
+三、关联容器操作
+1、一个map的value_type是一个pair，我们可以改变pair的值，但不能改变关键字成员的值。(因为关键字是const的)
+2、一个set中的关键字也是const的。
+3、当使用一个迭代器遍历一个map、multimap、set或multiset时，迭代器按关键字升序遍历元素。
+4、关联容器的insert成员向容器中添加一个元素或一个元素范围。
+5、对一个map进行insert操作时，必须记住元素类型是pair。
+可以在insert的参数列表中创建一个pair：
+// 向word_count插入word的4种方法
+word_count.insert({word, 1});
+word_count.insert(make_pair(word, 1));
+word_count.insert(pair<string, size_t>(word, 1));
+word_count.insert(map<string, size_t>::value_type(word, 1));
+
+6、特别注意，类似我们用过的其他下标运算符，map下标运算符接收一个索引(即，一个关键字)，获取与此关键字相关联的值。但是，与其他下标运算符不同的是，如果关键字并不在map中，会为它创建一个元素并插入到map中，关联值将进行值初始化。
+例如，
+map<string, size_t> word_count;	// empty map
+word_count["Anna"] = 1; 		// 插入一个关键字为Anna的元素，关联值进行值初始化；然后将1赋予它
+
+7、由于下标运算符可能插入一个新元素，我们只可以对非const的map使用下标操作。
+注意：对一个map使用下标操作，其行为与数组或vector上的下标操作很不相同：使用一个不在容器中的关键字作为下标，会添加一个具有此关键字的元素到map中。
+
+8、不能使用下标运算符来检查一个元素是否存在，因为如果关键字不存在的话，下标运算符会插入一个新元素。在这种情况下，应该使用find。
+例如：if(word_count.find("foobar") == word_count.end()) {...}
+
+9、如果关键字在容器中，lower_bound返回的迭代器将指向第一个具有给定关键字的元素，而upper_bound返回的迭代器则指向最后一个匹配给定关键字的元素之后的位置。如果元素不在multimap中，则lower_bound和upper_bound会返回相等的迭代器——指向一个不影响排序的关键字插入位置。因此，用相同的关键字调用lower_bound和upper_bound会得到一个迭代器范围，表示所有具有该关键字的元素的范围。
+只使用equal_range函数也可以实现上述功能。
+
+四、无序容器
+1、如果关键字类型固有就是无序的，或者性能测试发现问题可以用哈希技术解决，就可以使用无序容器。
+2、无序容器在存储上组织为一组桶，每个桶保存零个或多个元素。无序容器的性能依赖于哈希函数的质量和桶的数量和大小。
+
+一些术语：
+1、无论在有序容器中还是在无序容器中，具有相同关键字的元素都是相邻存储的。
+2、hash：特殊的标准库模板，无序容器用它来管理元素的位置。
+3、哈希函数：将给定类型的值映射到整型(size_t)值的函数。相等的值必须映射到相同的整数；不相等的值应尽可能映射到不同整数。
+4、key_type：关联容器定义的类型，用来保存和提取值的关键字的类型。对于一个map，key_type是用来索引map的类型。对于set，key_type和value_type是一样的。
+5、mapped_type：映射类型定义的类型，就是映射中关键字关联的值的类型。
+6、value_type：容器中元素的类型。对于set和multiset，value_type和key_type是一样的。对于map和multimap，此类型是一个pair，其first成员类型为const key_type，second成员类型为mapped_type。
+
